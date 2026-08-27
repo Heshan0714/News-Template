@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<title>News Card Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=Archivo:wght@600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a;
+    --navy-2:#122b52;
+    --navy-3:#0a1830;
+    --red:#c8161d;
+    --red-2:#a80f16;
+    --gold:#f4c430;
+    --gold-2:#d9a61e;
+    --paper:#eef1f5;
+    --line:#d8dee8;
+    --muted:#5a6579;
+    --shadow-navy: rgba(9, 22, 46, 0.35);
+  }
+  *{box-sizing:border-box;}
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 600px at 8% -10%, rgba(11,31,58,.05), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(200,22,29,.04), transparent 55%),
+      var(--paper);
+    font-family:'Noto Sans Sinhala','Archivo',sans-serif;
+    color:var(--navy);
+    display:flex;
+    min-height:100vh;
+  }
+  ::selection{ background:rgba(244,196,48,.45); }
+  #panel::-webkit-scrollbar{ width:9px; }
+  #panel::-webkit-scrollbar-track{ background:transparent; }
+  #panel::-webkit-scrollbar-thumb{ background:#d3d9e4; border-radius:20px; border:2px solid #fff; }
+  #panel::-webkit-scrollbar-thumb:hover{ background:#b9c2d3; }
+
+  /* ===== layout shell ===== */
+  #app{
+    display:flex;
+    width:100%;
+    flex-wrap:wrap;
+  }
+  #panel{
+    width:340px;
+    flex:0 0 340px;
+    background:#fff;
+    border-right:1px solid var(--line);
+    box-shadow: 3px 0 24px rgba(11,31,58,.05);
+    padding:24px 22px 60px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    max-height:100vh;
+    overflow-y:auto;
+    position:relative;
+    z-index:2;
+  }
+  #stageArea{
+    flex:1;
+    min-width:320px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    padding:40px 16px 60px;
+    background:
+      radial-gradient(1200px 700px at 50% 0%, rgba(11,31,58,.04), transparent 60%);
+  }
+
+  h1{
+    font-family:'Archivo',sans-serif;
+    font-size:17px;
+    font-weight:900;
+    margin:0;
+    letter-spacing:.02em;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  h1::before{
+    content:'';
+    width:9px; height:9px; border-radius:2px;
+    background:linear-gradient(135deg, var(--red) 0%, var(--red-2) 100%);
+    box-shadow:0 0 0 3px rgba(200,22,29,.14);
+    flex:0 0 auto;
+  }
+  h1 span{ color:var(--red); }
+  .section-label{
+    font-family:'Archivo',sans-serif;
+    font-size:10.5px;
+    font-weight:800;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 9px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .section-label::before{
+    content:'';
+    width:3px; height:3px; border-radius:50%;
+    background:var(--gold-2);
+  }
+
+  /* template switcher */
+  .tpl-switch{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:4px;
+  }
+  .tpl-switch button{
+    flex:1 1 calc(50% - 4px);
+    min-width:0;
+    border:none;
+    background:transparent;
+    font-family:'Archivo',sans-serif;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--muted);
+    padding:9px 4px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:all .18s ease;
+  }
+  .tpl-switch button:hover{ color:var(--navy); }
+  .tpl-switch button.active{
+    background:linear-gradient(160deg, var(--navy-2) 0%, var(--navy) 100%);
+    color:#fff;
+    box-shadow:0 4px 12px rgba(11,31,58,.32);
+  }
+
+  .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+  .field label{
+    font-size:12px; font-weight:600; color:var(--navy);
+  }
+  .field input[type=text], .field textarea{
+    font-family:'Noto Sans Sinhala',sans-serif;
+    font-size:13px;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    outline:none;
+    resize:vertical;
+    background:#fbfcfe;
+    transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .field input[type=text]:focus, .field textarea:focus{
+    border-color:var(--navy);
+    background:#fff;
+    box-shadow:0 0 0 3px rgba(11,31,58,.08);
+  }
+
+  .btn{
+    font-family:'Archivo',sans-serif;
+    font-size:12px;
+    font-weight:700;
+    color:var(--navy);
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:10px 12px;
+    cursor:pointer;
+    transition:all .15s ease;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    box-shadow:0 1px 2px rgba(11,31,58,.04);
+  }
+  .btn:hover{ background:#f2f5fa; border-color:#c3cbdb; transform:translateY(-1px); box-shadow:0 4px 10px rgba(11,31,58,.08); }
+  .btn:active{ transform:translateY(0); }
+  .btn.primary{
+    background:linear-gradient(160deg, var(--red) 0%, var(--red-2) 100%);
+    color:#fff; border-color:var(--red-2);
+    box-shadow:0 8px 20px rgba(168,15,22,.32);
+  }
+  .btn.primary:hover{ background:linear-gradient(160deg, #d81f26 0%, var(--red-2) 100%); box-shadow:0 10px 24px rgba(168,15,22,.4); }
+  .btn.block{ width:100%; }
+  .btn-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  input[type=file]{ display:none; }
+
+  .range-row{ display:flex; align-items:center; gap:10px; }
+  input[type=range]{ flex:1; accent-color:var(--navy); }
+  .range-val{ font-size:11px; color:var(--muted); width:34px; text-align:right; font-weight:700; }
+
+  .line-item{
+    display:flex; align-items:center; gap:8px;
+    border:1px solid var(--line);
+    background:#fbfcfe;
+    border-radius:9px;
+    padding:7px 9px;
+    margin-bottom:6px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .line-item:focus-within{ border-color:var(--navy); background:#fff; }
+  .line-item input[type=text]{ flex:1; border:none; background:transparent; font-size:12.5px; font-family:'Noto Sans Sinhala',sans-serif; }
+  .line-item input[type=text]:focus{ outline:none; }
+  .line-item .swatch{
+    width:17px; height:17px; border-radius:5px; cursor:pointer; border:1px solid var(--line); flex:0 0 auto;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.06);
+    transition:transform .15s ease;
+  }
+  .line-item .swatch:hover{ transform:scale(1.12); }
+  .line-item .del{
+    flex:0 0 auto; background:none; border:none; color:#b23; cursor:pointer; font-size:15px; font-weight:800;
+    width:20px; height:20px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease;
+  }
+  .line-item .del:hover{ background:rgba(200,22,29,.1); }
+
+  hr.sep{ border:none; border-top:1px solid var(--line); margin:2px 0; }
+
+  /* ===== stage / card ===== */
+  .stage-wrap{
+    width:min(1080px, 92vw);
+    aspect-ratio: 1080/1350;
+    position:relative;
+  }
+  .stage-wrap::after{
+    content:'';
+    position:absolute; left:6%; right:6%; bottom:-22px; height:34px;
+    background:radial-gradient(ellipse at center, rgba(11,31,58,.28) 0%, rgba(11,31,58,0) 72%);
+    z-index:-1; filter:blur(2px);
+  }
+  .card-template{ width:100%; height:100%; position:relative; overflow:hidden; border-radius:4px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.5) inset,
+      0 30px 60px -12px rgba(9,22,46,.4),
+      0 12px 24px -8px rgba(9,22,46,.25);
+    background:#c9cdd3; display:none; }
+  .card-template.active{ display:block; }
+
+  /* ---- BREAKING template ---- */
+  #tpl-breaking #photoLayer-b{
+    position:absolute; inset:0 0 40% 0;
+    background-size:cover; background-position:center; background-color:#9aa3b0;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Archivo',sans-serif; font-weight:700; font-size:20px; text-align:center; cursor:pointer;
+  }
+  #tpl-breaking #photoLayer-b::before{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(11,31,58,.16) 0%, rgba(11,31,58,0) 22%);
+    pointer-events:none; z-index:1;
+  }
+  #tpl-breaking #photoLayer-b::after{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(11,31,58,0) 48%, rgba(11,31,58,.42) 78%, rgba(9,22,46,.95) 100%);
+    pointer-events:none;
+  }
+  #tpl-breaking #photoLayer-b span{ background:rgba(11,31,58,.55); padding:14px 22px; border-radius:10px; pointer-events:none; z-index:2; }
+  #tpl-breaking #photoLayer-b.has-img span{ display:none; }
+  .date-badge{
+    position:absolute; top:26px; right:26px;
+    background: linear-gradient(160deg, #e2222a 0%, var(--red) 45%, var(--red-2) 100%);
+    border:1px solid rgba(255,255,255,.3);
+    color:#fff;
+    font-family:'Archivo',sans-serif; font-weight:800; font-size:19px; letter-spacing:.03em;
+    padding:9px 18px; border-radius:6px; z-index:5;
+    box-shadow:0 8px 20px rgba(9,22,46,.4), inset 0 1px 0 rgba(255,255,255,.25);
+    text-shadow:0 1px 2px rgba(0,0,0,.2);
+  }
+  .breaking-badge{
+    position:absolute; left:0; top:0; height:60%; width:58px; z-index:6;
+    background: linear-gradient(180deg, #e2222a 0%, var(--red) 40%, var(--red-2) 100%);
+    border-right:1px solid rgba(255,255,255,.28);
+    overflow:hidden;
+    box-shadow:4px 0 20px rgba(9,22,46,.4), inset -1px 0 0 rgba(255,255,255,.15);
+    display:none; align-items:center; justify-content:center;
+  }
+  .breaking-badge.show{ display:flex; }
+  .breaking-badge-text{
+    color:#fff;
+    font-family:'Archivo',sans-serif; font-weight:900; font-size:20px;
+    letter-spacing:.16em; text-transform:uppercase;
+    white-space:nowrap;
+    transform: rotate(-90deg);
+    text-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .breaking-badge::before{
+    content:''; position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    width:8px; height:8px; border-radius:50%; background:#fff; z-index:1;
+    animation: bnPulse 1.4s infinite;
+  }
+  @keyframes bnPulse{ 0%,100%{ opacity:1 } 50%{ opacity:.25 } }
+  @media (prefers-reduced-motion: reduce){ .breaking-badge::before{ animation:none; } }
+  #emblemLayer-b{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:130px; height:130px; z-index:4; opacity:.95; display:none;
+    align-items:center; justify-content:center; cursor:pointer;
+  }
+  #emblemLayer-b.has-img{ display:flex; }
+  #emblemLayer-b img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 3px 10px rgba(0,0,0,.45)); }
+  #emblemLayer-b .placeholder{
+    width:100%; height:100%; border:2px dashed rgba(255,255,255,.75); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-family:'Archivo',sans-serif; font-size:11px; font-weight:700; text-align:center; background:rgba(11,31,58,.28);
+  }
+  #logoBar-b{
+    position:absolute; left:0; right:0; top:60%; height:9%;
+    background:linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 100%);
+    box-shadow: 0 -1px 0 rgba(244,196,48,.55) inset, 0 1px 0 rgba(255,255,255,.06) inset;
+    display:flex; align-items:center; justify-content:center; gap:14px; padding:0 24px; z-index:3;
+  }
+  #logoImgWrap-b{ height:70%; display:flex; align-items:center; cursor:pointer; }
+  #logoImgWrap-b img{ height:100%; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+  #logoImgWrap-b .placeholder{
+    color:#fff; font-family:'Archivo',sans-serif; font-weight:800; font-size:12px;
+    border:1.5px dashed rgba(255,255,255,.6); border-radius:6px; padding:6px 12px;
+  }
+  #orgName-b{ color:#fff; font-weight:800; font-size:22px; text-align:center; letter-spacing:.01em; text-shadow:0 1px 3px rgba(0,0,0,.3); }
+  #headlineBlock-b{
+    position:absolute; left:0; right:0; top:69%; bottom:0;
+    background:linear-gradient(180deg, var(--navy) 0%, var(--navy-3) 100%);
+    padding:22px 36px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; text-align:center;
+    overflow:hidden;
+  }
+  .hl-line{ color:#fff; font-weight:700; line-height:1.45; width:100%; text-shadow:0 1px 3px rgba(0,0,0,.25); }
+  .hl-line.accent{ color:var(--gold); font-weight:800; text-shadow:0 1px 3px rgba(0,0,0,.35); }
+
+  /* ---- QUOTE template ---- */
+  #tpl-quote{
+    background:
+      radial-gradient(720px 520px at 50% 8%, rgba(244,196,48,.10), transparent 60%),
+      radial-gradient(900px 700px at 50% 100%, rgba(255,255,255,.05), transparent 55%),
+      linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 45%, var(--navy-3) 100%);
+  }
+  #tpl-quote::before{
+    content:'';
+    position:absolute; inset:16px;
+    border:1px solid rgba(244,196,48,.22);
+    pointer-events:none; z-index:1;
+  }
+  #photoLayer-q{
+    position:absolute; left:50%; top:9%; transform:translateX(-50%);
+    width:230px; height:230px; border-radius:50%; overflow:hidden;
+    border:5px solid var(--gold); background-size:cover; background-position:center; background-color:#4a5876;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; text-align:center;
+    cursor:pointer; font-family:'Archivo',sans-serif; font-weight:700;
+    box-shadow:
+      0 0 0 3px rgba(11,31,58,.9),
+      0 0 0 4px rgba(244,196,48,.35),
+      0 18px 34px rgba(0,0,0,.42);
+    z-index:3;
+  }
+  #photoLayer-q.has-img span{ display:none; }
+  #photoLayer-q span{ padding:0 20px; }
+  .quote-mark{
+    position:absolute; left:50%; top:37%; transform:translate(-50%,0);
+    font-family:'Playfair Display', Georgia, serif; font-style:italic; font-size:130px; font-weight:700;
+    color:var(--gold); opacity:.4; line-height:1; z-index:1;
+    text-shadow:0 4px 24px rgba(244,196,48,.25);
+  }
+  #quoteText{
+    position:absolute; left:0; right:0; top:44%; padding:0 64px;
+    color:#fff; font-weight:700; font-size:30px; line-height:1.52; text-align:center; z-index:2;
+    text-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  #quoteName{
+    position:absolute; left:0; right:0; bottom:15%; text-align:center;
+    color:var(--gold); font-weight:800; font-size:22px; letter-spacing:.01em;
+  }
+  #quoteName::after{
+    content:'';
+    display:block; width:46px; height:2px; margin:12px auto 0;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  #quoteTitle{
+    position:absolute; left:0; right:0; bottom:9.5%; text-align:center;
+    color:#c7cee0; font-weight:600; font-size:15px; letter-spacing:.01em;
+  }
+  #quoteFooter{
+    position:absolute; left:0; right:0; bottom:0; height:6%;
+    background:linear-gradient(160deg, #e2222a 0%, var(--red) 45%, var(--red-2) 100%);
+    box-shadow:0 -1px 0 rgba(255,255,255,.14) inset;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:14px; letter-spacing:.06em;
+    text-shadow:0 1px 2px rgba(0,0,0,.2);
+  }
+
+  /* ---- POLL template ---- */
+  #tpl-poll{
+    background:
+      radial-gradient(700px 460px at 50% 0%, rgba(244,196,48,.08), transparent 62%),
+      linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 55%, var(--paper) 55%);
+  }
+  #pollDate{
+    position:absolute; top:24px; right:26px;
+    background:linear-gradient(160deg, #e2222a 0%, var(--red) 45%, var(--red-2) 100%);
+    border:1px solid rgba(255,255,255,.3);
+    color:#fff;
+    font-family:'Archivo',sans-serif; font-weight:800; font-size:16px; padding:8px 16px; border-radius:6px;
+    box-shadow:0 8px 18px rgba(9,22,46,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    text-shadow:0 1px 2px rgba(0,0,0,.2);
+  }
+  #pollQuestion{
+    position:absolute; left:0; right:0; top:8%; padding:0 48px; text-align:center;
+    color:#fff; font-weight:800; font-size:28px; line-height:1.42;
+    text-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  #pollRows{
+    position:absolute; left:0; right:0; top:38%; padding:0 56px; display:flex; flex-direction:column; gap:22px;
+  }
+  .poll-row{ }
+  .poll-row-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px; }
+  .poll-row-label{ color:var(--navy); font-weight:700; font-size:17px; }
+  .poll-row-pct{ color:var(--red); font-weight:800; font-size:18px; font-variant-numeric:tabular-nums; }
+  .poll-bar-track{
+    width:100%; height:17px; background:#e3e8f0; border-radius:9px; overflow:hidden;
+    box-shadow:inset 0 1px 3px rgba(11,31,58,.14);
+  }
+  .poll-bar-fill{
+    height:100%; border-radius:9px;
+    background:linear-gradient(90deg, var(--red-2), var(--red) 60%, #e0454b);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 1px 4px rgba(168,15,22,.35);
+    position:relative;
+  }
+  #pollLogoBar{
+    position:absolute; left:0; right:0; bottom:0; height:8%;
+    background:linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 100%);
+    box-shadow:0 -1px 0 rgba(255,255,255,.08) inset;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  #pollOrgName{ color:#fff; font-weight:800; font-size:18px; text-shadow:0 1px 3px rgba(0,0,0,.3); letter-spacing:.01em; }
+
+  /* ---- NEWSWIRE template ---- */
+  #tpl-newswire{ background:#fff; }
+  #photoLayer-n{
+    position:absolute; inset:0 0 50% 0;
+    background-size:cover; background-position:center; background-color:#9aa3b0;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Archivo',sans-serif; font-weight:700; font-size:18px; text-align:center; cursor:pointer;
+  }
+  #photoLayer-n span{ background:rgba(11,31,58,.5); padding:12px 20px; border-radius:10px; pointer-events:none; }
+  #photoLayer-n.has-img span{ display:none; }
+
+  .newswire-blue{
+    position:absolute; left:0; right:0; top:50%; bottom:0;
+    background: linear-gradient(180deg, #2f8fe4 0%, #1c72c6 100%);
+    display:flex; flex-direction:column; align-items:center;
+    padding:48px 42px 28px;
+    text-align:center;
+    transition:bottom .15s ease;
+  }
+  #tpl-newswire.has-banner .newswire-blue{ bottom:13%; }
+
+  .newswire-pill{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:5;
+    background:#fff;
+    border-radius:999px;
+    padding:9px 22px 9px 9px;
+    display:flex; align-items:center; gap:10px;
+    box-shadow:0 12px 28px rgba(9,22,46,.3);
+  }
+  #logoImgWrap-n{
+    width:32px; height:32px; border-radius:9px; overflow:hidden;
+    background:linear-gradient(160deg, var(--navy-2), var(--navy));
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto;
+  }
+  #logoImgWrap-n img{ width:100%; height:100%; object-fit:contain; }
+  #logoImgWrap-n .placeholder{ color:#fff; font-family:'Archivo',sans-serif; font-weight:900; font-size:16px; }
+  #orgName-n{ font-family:'Archivo',sans-serif; font-weight:800; font-size:15.5px; color:var(--navy); letter-spacing:.02em; }
+
+  #dateText-n{
+    color:rgba(255,255,255,.86); font-family:'Archivo',sans-serif; font-weight:600; font-size:13px;
+    letter-spacing:.04em; margin-top:22px;
+  }
+  #headlineBlock-n{
+    display:flex; flex-direction:column; gap:6px; margin-top:16px; width:100%; overflow:hidden;
+  }
+  .hl-line-n{ color:#fff; font-weight:800; line-height:1.34; width:100%; text-shadow:0 2px 10px rgba(0,0,0,.18); }
+  #ctaText-n{
+    color:rgba(255,255,255,.85); font-size:13px; font-weight:600; margin-top:auto; padding-top:20px;
+  }
+
+  #bannerLayer-n{
+    position:absolute; left:0; right:0; bottom:0; height:13%;
+    background-size:cover; background-position:center; background-color:#0e1b30;
+    display:none; align-items:center; justify-content:center; cursor:pointer;
+    color:#fff; font-family:'Archivo',sans-serif; font-weight:700; font-size:12px; text-align:center;
+  }
+  #tpl-newswire.has-banner #bannerLayer-n{ display:flex; }
+  #bannerLayer-n.has-img span{ display:none; }
+
+  [contenteditable]{ outline:none; border-radius:4px; transition:box-shadow .12s ease; cursor:text; }
+  [contenteditable]:hover{ box-shadow:0 0 0 2px rgba(244,196,48,.65) inset; }
+  [contenteditable]:focus{ box-shadow:0 0 0 2px rgba(244,196,48,.9) inset; }
+
+  .footer-note{
+    width:min(1080px, 92vw); font-size:11.5px; color:var(--muted); text-align:center; line-height:1.6;
+  }
+  .footer-note::before{ content:'✦  '; color:var(--gold-2); }
+
+  #downloadBtn{ font-size:12.5px; padding:12px 14px; letter-spacing:.01em; }
+
+  @media (max-width: 800px){
+    #panel{ width:100%; flex:1 1 100%; max-height:none; border-right:none; box-shadow:none; border-bottom:1px solid var(--line); }
+    #stageArea{ padding:26px 12px 44px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== CONTROL PANEL ===================== -->
+  <div id="panel">
+    <div>
+      <h1>NEWS CARD <span>STUDIO</span></h1>
+    </div>
+
+    <div>
+      <p class="section-label">Template</p>
+      <div class="tpl-switch">
+        <button class="tpl-btn active" data-tpl="breaking">Breaking News</button>
+        <button class="tpl-btn" data-tpl="quote">Quote Card</button>
+        <button class="tpl-btn" data-tpl="poll">Poll Card</button>
+        <button class="tpl-btn" data-tpl="newswire">Newswire</button>
+      </div>
+    </div>
+
+    <!-- BREAKING CONTROLS -->
+    <div id="ctrl-breaking">
+      <p class="section-label">Images</p>
+      <div class="btn-row">
+        <button class="btn" id="up-photo-b">📷 Photo</button>
+        <button class="btn" id="up-logo-b">🏷️ Logo</button>
+        <button class="btn" id="up-emblem-b">🛡️ Seal</button>
+      </div>
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Date</p>
+      <div class="field"><input type="text" id="input-date-b" value="24-08-2026"></div>
+
+      <p class="section-label">Breaking News tag</p>
+      <div class="field" style="flex-direction:row; align-items:center; gap:8px;">
+        <input type="checkbox" id="toggle-breaking" style="width:16px; height:16px;">
+        <label for="toggle-breaking" style="font-weight:600; font-size:12.5px;">Card එකේ පෙන්නන්න</label>
+      </div>
+      <div class="field"><input type="text" id="input-breaking-text" value="BREAKING NEWS"></div>
+
+      <p class="section-label">Org name</p>
+      <div class="field"><input type="text" id="input-org-b" value="ඔයාගේ ආයතනයේ නම"></div>
+
+      <p class="section-label">Headline lines</p>
+      <div id="lines-b"></div>
+      <button class="btn block" id="add-line-b">+ Line එකක් එකතු කරන්න</button>
+
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Headline font size</p>
+      <div class="range-row">
+        <input type="range" id="fontsize-b" min="16" max="42" value="27">
+        <span class="range-val" id="fontsize-b-val">27</span>
+      </div>
+    </div>
+
+    <!-- QUOTE CONTROLS -->
+    <div id="ctrl-quote" style="display:none">
+      <p class="section-label">Images</p>
+      <div class="btn-row">
+        <button class="btn" id="up-photo-q">📷 Headshot</button>
+      </div>
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Quote text</p>
+      <div class="field"><textarea id="input-quote-text" rows="4">"මෙතනට quote එක type කරන්න"</textarea></div>
+      <p class="section-label">නම</p>
+      <div class="field"><input type="text" id="input-quote-name" value="නම මෙතනට"></div>
+      <p class="section-label">තනතුර</p>
+      <div class="field"><input type="text" id="input-quote-title" value="තනතුර / ආයතනය"></div>
+      <p class="section-label">Footer band text</p>
+      <div class="field"><input type="text" id="input-quote-footer" value="ඔයාගේ ආයතනයේ නම"></div>
+      <p class="section-label">Quote font size</p>
+      <div class="range-row">
+        <input type="range" id="fontsize-q" min="18" max="44" value="30">
+        <span class="range-val" id="fontsize-q-val">30</span>
+      </div>
+    </div>
+
+    <!-- POLL CONTROLS -->
+    <div id="ctrl-poll" style="display:none">
+      <p class="section-label">Date</p>
+      <div class="field"><input type="text" id="input-date-p" value="24-08-2026"></div>
+      <p class="section-label">ප්‍රශ්නය</p>
+      <div class="field"><textarea id="input-poll-q" rows="2">ඔබේ ප්‍රශ්නය මෙතනට type කරන්න?</textarea></div>
+      <p class="section-label">Options</p>
+      <div id="poll-rows-ctrl"></div>
+      <button class="btn block" id="add-poll-row">+ Option එකක් එකතු කරන්න</button>
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Org name (footer)</p>
+      <div class="field"><input type="text" id="input-org-p" value="ඔයාගේ ආයතනයේ නම"></div>
+    </div>
+
+    <!-- NEWSWIRE CONTROLS -->
+    <div id="ctrl-newswire" style="display:none">
+      <p class="section-label">Images</p>
+      <div class="btn-row">
+        <button class="btn" id="up-photo-n">📷 Photo</button>
+        <button class="btn" id="up-logo-n">🏷️ Logo icon</button>
+      </div>
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Date</p>
+      <div class="field"><input type="text" id="input-date-n" value="August 26, 2026"></div>
+
+      <p class="section-label">Org name (pill)</p>
+      <div class="field"><input type="text" id="input-org-n" value="NEWSWIRE"></div>
+
+      <p class="section-label">Headline lines</p>
+      <div id="lines-n"></div>
+      <button class="btn block" id="add-line-n">+ Line එකක් එකතු කරන්න</button>
+
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Headline font size</p>
+      <div class="range-row">
+        <input type="range" id="fontsize-n" min="18" max="40" value="30">
+        <span class="range-val" id="fontsize-n-val">30</span>
+      </div>
+
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">CTA line</p>
+      <div class="field"><input type="text" id="input-cta-n" value="Read full story in comments section or on www.newswire.lk"></div>
+
+      <hr class="sep" style="margin:16px 0">
+      <p class="section-label">Footer banner (optional)</p>
+      <div class="field" style="flex-direction:row; align-items:center; gap:8px;">
+        <input type="checkbox" id="toggle-banner-n" style="width:16px; height:16px;">
+        <label for="toggle-banner-n" style="font-weight:600; font-size:12.5px;">Promotional banner එකක් පෙන්නන්න</label>
+      </div>
+      <div class="btn-row">
+        <button class="btn block" id="up-banner-n">🖼️ Banner image upload කරන්න</button>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <button class="btn primary block" id="downloadBtn">⬇️ PNG එකක් විදිහට Download කරන්න</button>
+  </div>
+
+  <!-- ===================== STAGE ===================== -->
+  <div id="stageArea">
+    <div class="stage-wrap">
+
+      <!-- BREAKING TEMPLATE -->
+      <div class="card-template active" id="tpl-breaking">
+        <div id="photoLayer-b"><span>ඡායාරූපය මෙතනට click කරලා upload කරන්න</span></div>
+        <div class="date-badge" id="dateBadge-b" contenteditable="true">24-08-2026</div>
+        <div class="breaking-badge" id="breakingBadge-b"><div class="breaking-badge-text" id="breakingBadgeText-b" contenteditable="true">BREAKING NEWS</div></div>
+        <div id="emblemLayer-b"></div>
+        <div id="logoBar-b">
+          <div id="logoImgWrap-b"><div class="placeholder">LOGO</div></div>
+          <div id="orgName-b" contenteditable="true">ඔයාගේ ආයතනයේ නම</div>
+        </div>
+        <div id="headlineBlock-b"></div>
+      </div>
+
+      <!-- QUOTE TEMPLATE -->
+      <div class="card-template" id="tpl-quote">
+        <div id="photoLayer-q"><span>headshot upload කරන්න</span></div>
+        <div class="quote-mark">&#8220;</div>
+        <div id="quoteText" contenteditable="true">"මෙතනට quote එක type කරන්න"</div>
+        <div id="quoteName" contenteditable="true">නම මෙතනට</div>
+        <div id="quoteTitle" contenteditable="true">තනතුර / ආයතනය</div>
+        <div id="quoteFooter" contenteditable="true">ඔයාගේ ආයතනයේ නම</div>
+      </div>
+
+      <!-- POLL TEMPLATE -->
+      <div class="card-template" id="tpl-poll">
+        <div id="pollDate" contenteditable="true">24-08-2026</div>
+        <div id="pollQuestion" contenteditable="true">ඔබේ ප්‍රශ්නය මෙතනට type කරන්න?</div>
+        <div id="pollRows"></div>
+        <div id="pollLogoBar"><div id="pollOrgName" contenteditable="true">ඔයාගේ ආයතනයේ නම</div></div>
+      </div>
+
+      <!-- NEWSWIRE TEMPLATE -->
+      <div class="card-template" id="tpl-newswire">
+        <div id="photoLayer-n"><span>ඡායාරූපය මෙතනට click කරලා upload කරන්න</span></div>
+        <div class="newswire-blue">
+          <div id="dateText-n" contenteditable="true">August 26, 2026</div>
+          <div id="headlineBlock-n"></div>
+          <div id="ctaText-n" contenteditable="true">Read full story in comments section or on www.newswire.lk</div>
+        </div>
+        <div class="newswire-pill">
+          <div id="logoImgWrap-n"><div class="placeholder">N</div></div>
+          <div id="orgName-n" contenteditable="true">NEWSWIRE</div>
+        </div>
+        <div id="bannerLayer-n"><span>Banner image upload කරන්න</span></div>
+      </div>
+
+    </div>
+
+    <div class="footer-note">
+      Text edit කරන්න card එක මතින්ම click කරන්න. Panel එකෙන් images, lines, options manage කරන්න. සම්පූර්ණ වූ පසු "PNG Download" button එකෙන් high-quality file එකක් save කරගන්න.
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- template switching ---------------- */
+const tplBtns = document.querySelectorAll('.tpl-btn');
+const tplCards = document.querySelectorAll('.card-template');
+const ctrlPanels = { breaking: document.getElementById('ctrl-breaking'), quote: document.getElementById('ctrl-quote'), poll: document.getElementById('ctrl-poll'), newswire: document.getElementById('ctrl-newswire') };
+tplBtns.forEach(btn=>{
+  btn.onclick = () => {
+    tplBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tpl = btn.dataset.tpl;
+    tplCards.forEach(c=>c.classList.toggle('active', c.id === 'tpl-'+tpl));
+    Object.entries(ctrlPanels).forEach(([k,el])=> el.style.display = (k===tpl? 'block':'none'));
+  };
+});
+
+function readAsDataURL(file, cb){
+  const reader = new FileReader();
+  reader.onload = e => cb(e.target.result);
+  reader.readAsDataURL(file);
+}
+function bindUpload(btnId, accept, onLoad){
+  const input = document.createElement('input');
+  input.type='file'; input.accept = accept || 'image/*';
+  document.getElementById(btnId).onclick = () => input.click();
+  input.onchange = e => { const f = e.target.files[0]; if(f) readAsDataURL(f, onLoad); };
+}
+
+/* ---------------- BREAKING template logic ---------------- */
+const photoLayerB = document.getElementById('photoLayer-b');
+const logoWrapB = document.getElementById('logoImgWrap-b');
+const emblemLayerB = document.getElementById('emblemLayer-b');
+
+bindUpload('up-photo-b', 'image/*', url => { photoLayerB.style.backgroundImage = `url(${url})`; photoLayerB.classList.add('has-img'); });
+photoLayerB.onclick = () => document.getElementById('up-photo-b').click();
+bindUpload('up-logo-b', 'image/*', url => { logoWrapB.innerHTML = `<img src="${url}" alt="logo">`; });
+logoWrapB.onclick = () => document.getElementById('up-logo-b').click();
+bindUpload('up-emblem-b', 'image/*', url => { emblemLayerB.innerHTML = `<img src="${url}" alt="emblem">`; emblemLayerB.classList.add('has-img'); });
+emblemLayerB.onclick = () => document.getElementById('up-emblem-b').click();
+
+document.getElementById('input-date-b').oninput = e => document.getElementById('dateBadge-b').textContent = e.target.value;
+document.getElementById('dateBadge-b').addEventListener('input', e => document.getElementById('input-date-b').value = e.target.textContent);
+
+const breakingBadgeB = document.getElementById('breakingBadge-b');
+const breakingBadgeTextB = document.getElementById('breakingBadgeText-b');
+const toggleBreaking = document.getElementById('toggle-breaking');
+const inputBreakingText = document.getElementById('input-breaking-text');
+toggleBreaking.onchange = () => breakingBadgeB.classList.toggle('show', toggleBreaking.checked);
+inputBreakingText.oninput = e => breakingBadgeTextB.textContent = e.target.value;
+breakingBadgeTextB.addEventListener('input', e => inputBreakingText.value = e.target.textContent);
+document.getElementById('input-org-b').oninput = e => document.getElementById('orgName-b').textContent = e.target.value;
+document.getElementById('orgName-b').addEventListener('input', e => document.getElementById('input-org-b').value = e.target.textContent);
+
+/* headline lines management */
+const linesWrapB = document.getElementById('lines-b');
+const headlineBlockB = document.getElementById('headlineBlock-b');
+let headlines = [
+  { text: 'පළමු පේළිය මෙතනට type කරන්න', accent:false },
+  { text: 'වැදගත් කොටස කහ පාටින්', accent:true },
+  { text: 'තුන්වන පේළිය', accent:false }
+];
+let hlFontSize = 27;
+
+function fitHeadlines(){
+  const container = headlineBlockB;
+  const els = container.querySelectorAll('.hl-line');
+  if(!els.length) return;
+  let size = hlFontSize;
+  els.forEach(el => el.style.fontSize = size + 'px');
+  let guard = 0;
+  while (container.scrollHeight > container.clientHeight && size > 14 && guard < 60){
+    size -= 1;
+    els.forEach(el => el.style.fontSize = size + 'px');
+    guard++;
+  }
+}
+
+function renderHeadlines(){
+  linesWrapB.innerHTML = '';
+  headlineBlockB.innerHTML = '';
+  headlines.forEach((line, idx)=>{
+    // control row
+    const row = document.createElement('div');
+    row.className = 'line-item';
+    const swatch = document.createElement('div');
+    swatch.className = 'swatch';
+    swatch.style.background = line.accent ? 'var(--gold)' : '#fff';
+    swatch.title = 'Color toggle කරන්න';
+    swatch.onclick = () => { line.accent = !line.accent; renderHeadlines(); };
+    const input = document.createElement('input');
+    input.type='text'; input.value = line.text;
+    input.oninput = e => { line.text = e.target.value; renderHeadlines(); };
+    const del = document.createElement('button');
+    del.className='del'; del.textContent='×'; del.title='ඉවත් කරන්න';
+    del.onclick = () => { headlines.splice(idx,1); renderHeadlines(); };
+    row.append(swatch, input, del);
+    linesWrapB.appendChild(row);
+
+    // stage element
+    const div = document.createElement('div');
+    div.className = 'hl-line' + (line.accent ? ' accent' : '');
+    div.contentEditable = 'true';
+    div.style.fontSize = hlFontSize + 'px';
+    div.textContent = line.text;
+    div.addEventListener('input', () => { headlines[idx].text = div.textContent; input.value = div.textContent; fitHeadlines(); });
+    headlineBlockB.appendChild(div);
+  });
+  fitHeadlines();
+}
+renderHeadlines();
+
+document.getElementById('add-line-b').onclick = () => { headlines.push({text:'නව පේළිය', accent:false}); renderHeadlines(); };
+const fsB = document.getElementById('fontsize-b');
+fsB.oninput = e => { hlFontSize = +e.target.value; document.getElementById('fontsize-b-val').textContent = hlFontSize; fitHeadlines(); };
+
+/* ---------------- QUOTE template logic ---------------- */
+const photoLayerQ = document.getElementById('photoLayer-q');
+bindUpload('up-photo-q', 'image/*', url => { photoLayerQ.style.backgroundImage = `url(${url})`; photoLayerQ.classList.add('has-img'); });
+photoLayerQ.onclick = () => document.getElementById('up-photo-q').click();
+
+const qText = document.getElementById('quoteText');
+const qName = document.getElementById('quoteName');
+const qTitle = document.getElementById('quoteTitle');
+const qFooter = document.getElementById('quoteFooter');
+const inQText = document.getElementById('input-quote-text');
+const inQName = document.getElementById('input-quote-name');
+const inQTitle = document.getElementById('input-quote-title');
+const inQFooter = document.getElementById('input-quote-footer');
+
+inQText.oninput = e => qText.textContent = e.target.value;
+qText.addEventListener('input', () => inQText.value = qText.textContent);
+inQName.oninput = e => qName.textContent = e.target.value;
+qName.addEventListener('input', () => inQName.value = qName.textContent);
+inQTitle.oninput = e => qTitle.textContent = e.target.value;
+qTitle.addEventListener('input', () => inQTitle.value = qTitle.textContent);
+inQFooter.oninput = e => qFooter.textContent = e.target.value;
+qFooter.addEventListener('input', () => inQFooter.value = qFooter.textContent);
+
+const fsQ = document.getElementById('fontsize-q');
+fsQ.oninput = e => { qText.style.fontSize = e.target.value+'px'; document.getElementById('fontsize-q-val').textContent = e.target.value; };
+
+/* ---------------- POLL template logic ---------------- */
+let pollRows = [
+  { label:'විකල්පය 1', pct:55 },
+  { label:'විකල්පය 2', pct:30 },
+  { label:'විකල්පය 3', pct:15 }
+];
+const pollRowsCtrl = document.getElementById('poll-rows-ctrl');
+const pollRowsStage = document.getElementById('pollRows');
+
+function renderPoll(){
+  pollRowsCtrl.innerHTML = '';
+  pollRowsStage.innerHTML = '';
+  pollRows.forEach((row, idx)=>{
+    const ctrlRow = document.createElement('div');
+    ctrlRow.className = 'line-item';
+    const labelInput = document.createElement('input');
+    labelInput.type='text'; labelInput.value = row.label; labelInput.style.flex='2';
+    labelInput.oninput = e => { row.label = e.target.value; renderPoll(); };
+    const pctInput = document.createElement('input');
+    pctInput.type='text'; pctInput.value = row.pct; pctInput.style.flex='0 0 44px'; pctInput.style.textAlign='center';
+    pctInput.oninput = e => { row.pct = Math.max(0, Math.min(100, +e.target.value || 0)); renderPoll(); };
+    const del = document.createElement('button');
+    del.className='del'; del.textContent='×';
+    del.onclick = () => { pollRows.splice(idx,1); renderPoll(); };
+    ctrlRow.append(labelInput, pctInput, del);
+    pollRowsCtrl.appendChild(ctrlRow);
+
+    const stageRow = document.createElement('div');
+    stageRow.className = 'poll-row';
+    stageRow.innerHTML = `
+      <div class="poll-row-top">
+        <span class="poll-row-label">${row.label}</span>
+        <span class="poll-row-pct">${row.pct}%</span>
+      </div>
+      <div class="poll-bar-track"><div class="poll-bar-fill" style="width:${row.pct}%"></div></div>
+    `;
+    pollRowsStage.appendChild(stageRow);
+  });
+}
+renderPoll();
+document.getElementById('add-poll-row').onclick = () => { pollRows.push({label:'නව විකල්පය', pct:0}); renderPoll(); };
+
+document.getElementById('input-date-p').oninput = e => document.getElementById('pollDate').textContent = e.target.value;
+document.getElementById('pollDate').addEventListener('input', e => document.getElementById('input-date-p').value = e.target.textContent);
+document.getElementById('input-poll-q').oninput = e => document.getElementById('pollQuestion').textContent = e.target.value;
+document.getElementById('pollQuestion').addEventListener('input', e => document.getElementById('input-poll-q').value = e.target.textContent);
+document.getElementById('input-org-p').oninput = e => document.getElementById('pollOrgName').textContent = e.target.value;
+document.getElementById('pollOrgName').addEventListener('input', e => document.getElementById('input-org-p').value = e.target.textContent);
+
+/* ---------------- NEWSWIRE template logic ---------------- */
+const photoLayerN = document.getElementById('photoLayer-n');
+const logoWrapN = document.getElementById('logoImgWrap-n');
+const bannerLayerN = document.getElementById('bannerLayer-n');
+const tplNewswireEl = document.getElementById('tpl-newswire');
+
+bindUpload('up-photo-n', 'image/*', url => { photoLayerN.style.backgroundImage = `url(${url})`; photoLayerN.classList.add('has-img'); });
+photoLayerN.onclick = () => document.getElementById('up-photo-n').click();
+bindUpload('up-logo-n', 'image/*', url => { logoWrapN.innerHTML = `<img src="${url}" alt="logo">`; });
+logoWrapN.onclick = () => document.getElementById('up-logo-n').click();
+bindUpload('up-banner-n', 'image/*', url => { bannerLayerN.style.backgroundImage = `url(${url})`; bannerLayerN.classList.add('has-img'); });
+bannerLayerN.onclick = () => document.getElementById('up-banner-n').click();
+
+document.getElementById('input-date-n').oninput = e => document.getElementById('dateText-n').textContent = e.target.value;
+document.getElementById('dateText-n').addEventListener('input', e => document.getElementById('input-date-n').value = e.target.textContent);
+document.getElementById('input-org-n').oninput = e => document.getElementById('orgName-n').textContent = e.target.value;
+document.getElementById('orgName-n').addEventListener('input', e => document.getElementById('input-org-n').value = e.target.textContent);
+document.getElementById('input-cta-n').oninput = e => document.getElementById('ctaText-n').textContent = e.target.value;
+document.getElementById('ctaText-n').addEventListener('input', e => document.getElementById('input-cta-n').value = e.target.textContent);
+
+const toggleBannerN = document.getElementById('toggle-banner-n');
+toggleBannerN.onchange = () => tplNewswireEl.classList.toggle('has-banner', toggleBannerN.checked);
+
+/* headline lines management (newswire) */
+const linesWrapN = document.getElementById('lines-n');
+const headlineBlockN = document.getElementById('headlineBlock-n');
+let headlinesN = [
+  { text: 'පළමු headline line එක' },
+  { text: 'දෙවන headline line එක' }
+];
+let hlFontSizeN = 30;
+
+function fitHeadlinesN(){
+  const container = headlineBlockN;
+  const els = container.querySelectorAll('.hl-line-n');
+  if(!els.length) return;
+  let size = hlFontSizeN;
+  els.forEach(el => el.style.fontSize = size + 'px');
+  let guard = 0;
+  const maxH = tplNewswireEl.clientHeight * 0.30;
+  while (container.scrollHeight > maxH && size > 14 && guard < 60){
+    size -= 1;
+    els.forEach(el => el.style.fontSize = size + 'px');
+    guard++;
+  }
+}
+
+function renderHeadlinesN(){
+  linesWrapN.innerHTML = '';
+  headlineBlockN.innerHTML = '';
+  headlinesN.forEach((line, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'line-item';
+    const input = document.createElement('input');
+    input.type='text'; input.value = line.text;
+    input.oninput = e => { line.text = e.target.value; renderHeadlinesN(); };
+    const del = document.createElement('button');
+    del.className='del'; del.textContent='×'; del.title='ඉවත් කරන්න';
+    del.onclick = () => { headlinesN.splice(idx,1); renderHeadlinesN(); };
+    row.append(input, del);
+    linesWrapN.appendChild(row);
+
+    const div = document.createElement('div');
+    div.className = 'hl-line-n';
+    div.contentEditable = 'true';
+    div.style.fontSize = hlFontSizeN + 'px';
+    div.textContent = line.text;
+    div.addEventListener('input', () => { headlinesN[idx].text = div.textContent; input.value = div.textContent; fitHeadlinesN(); });
+    headlineBlockN.appendChild(div);
+  });
+  fitHeadlinesN();
+}
+renderHeadlinesN();
+
+document.getElementById('add-line-n').onclick = () => { headlinesN.push({text:'නව පේළිය'}); renderHeadlinesN(); };
+const fsN = document.getElementById('fontsize-n');
+fsN.oninput = e => { hlFontSizeN = +e.target.value; document.getElementById('fontsize-n-val').textContent = hlFontSizeN; fitHeadlinesN(); };
+
+/* ---------------- PNG export ---------------- */
+document.getElementById('downloadBtn').onclick = async () => {
+  const activeCard = document.querySelector('.card-template.active');
+  const btn = document.getElementById('downloadBtn');
+  const original = btn.textContent;
+
+  try{
+    if (typeof html2canvas === 'undefined') {
+      throw new Error('PNG library එක load වෙලා නෑ (network/CDN issue). Page එක refresh කරලා ආයෙත් try කරන්න.');
+    }
+    btn.textContent = '⏳ Rendering...';
+    btn.disabled = true;
+
+    // fonts fully loaded වෙනකම් wait කරනවා, නැත්නම් Sinhala text export එකේ නිවැරදිව පේන්නෙ නෑ
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+    await new Promise(r => setTimeout(r, 150));
+
+    const canvas = await html2canvas(activeCard, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+
+    const link = document.createElement('a');
+    link.download = 'news-card.png';
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    btn.textContent = original;
+    btn.disabled = false;
+  } catch(err){
+    console.error(err);
+    alert('Download fail වුණා: ' + err.message + '\n\nඑය වෙනුවට browser screenshot tool එකෙන් card එක capture කරන්න (Mac: Cmd+Shift+4, Windows: Win+Shift+S).');
+    btn.textContent = original;
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
